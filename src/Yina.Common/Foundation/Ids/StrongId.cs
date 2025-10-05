@@ -1,6 +1,7 @@
-namespace Yina.Common.Foundation.Ids;
-
+using System;
 using System.Diagnostics.CodeAnalysis;
+
+namespace Yina.Common.Foundation.Ids;
 
 public readonly record struct StrongId<TTag>(Guid Value) where TTag : notnull
 {
@@ -33,6 +34,9 @@ public readonly record struct StrongId<TTag>(Guid Value) where TTag : notnull
         id = default;
         return false;
     }
+
+    public static bool TryParse(string? value, [MaybeNullWhen(false)] out StrongId<TTag> id)
+        => TryFromString(value, out id);
 
     public override string ToString() => Value.ToString();
 

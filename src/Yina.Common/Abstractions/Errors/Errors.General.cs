@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 public static partial class Errors
 {
+    private const string DefaultUnexpectedMessage = "An unexpected error occurred.";
+
     public static Error Failure(string code, string message, int statusCode = 500, IDictionary<string, string>? metadata = null)
         => Error.Create(code, message, statusCode, null, metadata);
 
@@ -15,11 +17,20 @@ public static partial class Errors
             : new Dictionary<string, string>(metadata, StringComparer.Ordinal);
 
         details["exception"] = exception.GetType().Name;
+
+#if DEBUG
+        if (!string.IsNullOrWhiteSpace(exception.Message))
+        {
+            details["message"] = exception.Message;
+        }
+
         if (!string.IsNullOrWhiteSpace(exception.StackTrace))
         {
             details["stackTrace"] = exception.StackTrace!;
         }
+#endif
 
-        return Error.Create(code ?? "UNHANDLED_EXCEPTION", exception.Message, statusCode, null, details);
+        var errorCode = code ?? "UNHANDLED_EXCEPTION";
+        return Error.Create(errorCode, DefaultUnexpectedMessage, statusCode, null, details);
     }
 }
