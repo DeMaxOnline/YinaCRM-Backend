@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YinaCRM.Core", "src\YinaCRM.Core\YinaCRM.Core.csproj", "{0A21C88E-0588-4564-ABC8-39BEABE21E7E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yina.Common", "src\Yina.Common\Yina.Common.csproj", "{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,11 +31,24 @@ Global
 		{0A21C88E-0588-4564-ABC8-39BEABE21E7E}.Release|x64.Build.0 = Release|Any CPU
 		{0A21C88E-0588-4564-ABC8-39BEABE21E7E}.Release|x86.ActiveCfg = Release|Any CPU
 		{0A21C88E-0588-4564-ABC8-39BEABE21E7E}.Release|x86.Build.0 = Release|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Debug|x64.Build.0 = Debug|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Debug|x86.Build.0 = Debug|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Release|x64.ActiveCfg = Release|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Release|x64.Build.0 = Release|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Release|x86.ActiveCfg = Release|Any CPU
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{0A21C88E-0588-4564-ABC8-39BEABE21E7E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{0369B3F8-399C-4FE4-9DAF-BA4D90E9ADA8} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
