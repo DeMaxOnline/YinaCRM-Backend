@@ -5,6 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <CoverletOutput>$(MSBuildProjectDirectory)/TestResults/coverage</CoverletOutput>
+    <Threshold>95</Threshold>
+    <ThresholdType>line</ThresholdType>
+    <ThresholdStat>Total</ThresholdStat>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,3 +30,4 @@
   </ItemGroup>
 
 </Project>
+

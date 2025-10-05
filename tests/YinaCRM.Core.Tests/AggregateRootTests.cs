@@ -21,7 +21,7 @@ public sealed class AggregateRootTests
         Assert.Equal(1, stored.AggregateVersion);
         Assert.Equal(evt.AggregateId, stored.AggregateId);
         Assert.Equal(1, aggregate.Version);
-        Assert.NotNull(aggregate.UpdatedAt);
+        Assert.Null(aggregate.UpdatedAt);
 
         var dequeued = aggregate.DequeueEvents();
         Assert.Equal(stored, Assert.Single(dequeued));
@@ -65,6 +65,19 @@ public sealed class AggregateRootTests
         Assert.Equal(2, aggregate.AppliedEvents.Count);
     }
 
+    [Fact]
+    public void UpdatedAt_UsesEventTimestampOnSubsequentEvents()
+    {
+        var aggregate = new FakeAggregate();
+
+        aggregate.Trigger(new FakeEvent(aggregate.Id.ToString()));
+        aggregate.DequeueEvents();
+
+        aggregate.Trigger(new FakeEvent(aggregate.Id.ToString()));
+        var stored = Assert.IsType<FakeEvent>(aggregate.DequeueEvents().Single());
+        Assert.Equal(stored.OccurredAtUtc, aggregate.UpdatedAt);
+    }
+
     private sealed record FakeEvent(string AggregateId)
         : DomainEventBase(AggregateId, nameof(FakeAggregate))
     {
@@ -99,6 +112,8 @@ public sealed class AggregateRootTests
 
     private readonly struct FakeAggregateIdTag { }
 }
+
+
 
 
 

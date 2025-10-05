@@ -51,6 +51,23 @@ public sealed class ValueObjectTests
     }
 
     [Fact]
+    public void InternalName_NormalizesInput()
+    {
+        var created = DomainTestHelper.InternalName("  Acme-Cloud  ");
+        Assert.Equal("acme-cloud", created.ToString());
+    }
+
+    [Theory]
+    [InlineData("portal-1")]
+    [InlineData("api")]
+    [InlineData("support-hub")]
+    public void UrlTypeCode_AllowsLowercaseDsl(string value)
+    {
+        var result = DomainTestHelper.UrlType(value);
+        Assert.Equal(value, result.ToString());
+    }
+
+    [Fact]
     public void UrlValidation()
     {
         Assert.True(Url.TryCreate("not-a-url").IsFailure);
@@ -98,6 +115,8 @@ public sealed class ValueObjectTests
         Assert.True(VisibilityCode.TryCreate("public").IsFailure);
     }
 }
+
+
 
 
 

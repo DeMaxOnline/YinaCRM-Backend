@@ -30,12 +30,10 @@ public sealed class InteractionTests
         var participantAdded = Assert.IsType<InteractionParticipantAdded>(interaction.DequeueEvents().Single());
         Assert.Equal(participantId, participantAdded.ParticipantId);
 
-        // Duplicate participant rejected
         var duplicate = interaction.AddParticipant(DomainTestHelper.ActorKind("User"), participantId, DomainTestHelper.ParticipantRole("organizer"));
         Assert.True(duplicate.IsFailure);
         Assert.Equal("INTERACTION_PARTICIPANT_EXISTS", duplicate.Error.Code);
 
-        // Remove participant
         Assert.True(interaction.RemoveParticipant(DomainTestHelper.ActorKind("User"), participantId).IsSuccess);
         Assert.IsType<InteractionParticipantRemoved>(interaction.DequeueEvents().Single());
 
@@ -43,14 +41,12 @@ public sealed class InteractionTests
         Assert.True(missingRemoval.IsFailure);
         Assert.Equal("INTERACTION_PARTICIPANT_NOT_FOUND", missingRemoval.Error.Code);
 
-        // Add link and ensure duplicates are rejected
         var relatedId = Guid.NewGuid();
         Assert.True(interaction.AddLink("SupportTicket", relatedId).IsSuccess);
         Assert.True(interaction.AddLink("SupportTicket", relatedId).IsFailure);
         Assert.True(interaction.RemoveLink("SupportTicket", relatedId).IsSuccess);
         Assert.True(interaction.RemoveLink("SupportTicket", relatedId).IsFailure);
 
-        // Update details triggers event
         var updateResult = interaction.UpdateDetails(
             DomainTestHelper.Title("Updated subject"),
             DomainTestHelper.Body("New description"),
@@ -59,12 +55,10 @@ public sealed class InteractionTests
         var updated = Assert.IsType<InteractionUpdated>(interaction.DequeueEvents().Single());
         Assert.Equal("Updated subject", updated.UpdatedSubject);
 
-        // Complete interaction
         Assert.True(interaction.Complete(DateTime.UtcNow, TimeSpan.FromMinutes(15)).IsSuccess);
         Assert.NotNull(interaction.CompletedAt);
         Assert.Equal(TimeSpan.FromMinutes(15), interaction.Duration);
 
-        // Persistence round trip
         interaction.PersistenceParticipants.Add(new Interaction.InteractionParticipantRecord
         {
             ParticipantKind = "User",
@@ -94,5 +88,45 @@ public sealed class InteractionTests
         var result = interaction.UpdateDetails(null, null, null);
         Assert.True(result.IsSuccess);
         Assert.Empty(interaction.DequeueEvents());
+    }
+
+    [Fact]
+    public void EventReplay_RebuildsState()
+    {
+        var interaction = DomainTestHelper.ExpectValue(Interaction.Create(
+            DomainTestHelper.InteractionType(),
+            DomainTestHelper.InteractionDirection(),
+            DomainTestHelper.Title("Initial"),
+            DomainTestHelper.Body("Body")));
+
+        var participantId = Guid.NewGuid();
+        interaction.AddParticipant(DomainTestHelper.ActorKind("User"), participantId, DomainTestHelper.ParticipantRole("organizer"));
+        interaction.UpdateDetails(DomainTestHelper.Title("Follow-up"), DomainTestHelper.Body("Discussed upgrades"), DateTime.UtcNow.AddHours(1));
+
+        var events = interaction.DequeueEvents().ToArray();
+        var rehydrated = (Interaction)Activator.CreateInstance(typeof(Interaction), nonPublic: true)!;
+        rehydrated.LoadFromHistory(events);
+
+        Assert.Equal(interaction.Subject.ToString(), rehydrated.Subject.ToString());
+        Assert.Equal(interaction.Description?.ToString(), rehydrated.Description?.ToString());
+        var expectedParticipantId = interaction.Participants.First().ParticipantId;
+        var rehydratedParticipantId = rehydrated.Participants.Single().ParticipantId;
+        Assert.Equal(expectedParticipantId, rehydratedParticipantId);
+    }
+
+    [Fact]
+    public void PersistenceParticipantRecord_InvalidParticipant_Throws()
+    {
+        var interaction = DomainTestHelper.ExpectValue(Interaction.Create(
+            DomainTestHelper.InteractionType(),
+            DomainTestHelper.InteractionDirection(),
+            DomainTestHelper.Title()));
+
+        Assert.Throws<InvalidOperationException>(() => interaction.PersistenceParticipants.Add(new Interaction.InteractionParticipantRecord
+        {
+            ParticipantKind = "Invalid",
+            ParticipantId = Guid.NewGuid(),
+            Role = "organizer"
+        }));
     }
 }

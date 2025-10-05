@@ -31,16 +31,22 @@ public abstract class AggregateRoot<TId> : IAggregateRoot where TId : struct
 
     protected void RaiseEvent(IDomainEvent @event)
     {
+        var isFirstEvent = Version == 0 && _pendingEvents.Count == 0;
+
         if (@event is DomainEventBase domainEvent)
         {
             @event = domainEvent with { AggregateVersion = Version + 1 };
         }
 
-                _pendingEvents.Add(@event);
+        _pendingEvents.Add(@event);
         ApplyEvent(@event);
         Version++;
 
-        if (@event is DomainEventBase enriched)
+        if (isFirstEvent)
+        {
+            UpdatedAt = null;
+        }
+        else if (@event is DomainEventBase enriched)
         {
             UpdatedAt = enriched.OccurredAtUtc;
         }
@@ -96,5 +102,7 @@ public abstract class AggregateRoot<TId> : IAggregateRoot where TId : struct
         return DeletedAt.Value <= reference.Add(-retentionPeriod);
     }
 }
+
+
 
 

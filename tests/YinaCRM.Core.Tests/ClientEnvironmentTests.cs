@@ -28,24 +28,20 @@ public sealed class ClientEnvironmentTests
         Assert.Equal(2, env.PersistenceUrls.Count);
         Assert.Equal(2, env.Urls.Count);
 
-        // Adding a new URL raises an event
         var addResult = env.AddUrl(DomainTestHelper.UrlType("api"), DomainTestHelper.Url("https://api.example.com"), true);
         Assert.True(addResult.IsSuccess);
         var added = Assert.IsType<EnvironmentUrlAdded>(env.DequeueEvents().Single());
         Assert.Equal("api", added.TypeCode.ToString());
 
-        // Update the URL to become secondary
         var updateResult = env.UpdateUrl(added.UrlId, DomainTestHelper.UrlType("api"), DomainTestHelper.Url("https://api.example.com/v2"), false);
         Assert.True(updateResult.IsSuccess);
         var updated = Assert.IsType<EnvironmentUrlUpdated>(env.DequeueEvents().Single());
         Assert.False(updated.IsPrimary);
 
-        // Remove the URL
         var removeResult = env.RemoveUrl(added.UrlId);
         Assert.True(removeResult.IsSuccess);
         Assert.IsType<EnvironmentUrlRemoved>(env.DequeueEvents().Single());
 
-        // Ensure persistence collection round-trips
         env.PersistenceUrls.Add(new ClientEnvironment.ClientEnvironmentUrlRecord
         {
             Id = Guid.NewGuid(),
@@ -76,7 +72,6 @@ public sealed class ClientEnvironmentTests
             ClientId.New(),
             DomainTestHelper.EnvironmentName()));
 
-        // Add primary then attempt conflicting add
         Assert.True(env.AddUrl(type, DomainTestHelper.Url(), true).IsSuccess);
         var addConflict = env.AddUrl(type, DomainTestHelper.Url("https://alt.example.com"), true);
         Assert.True(addConflict.IsFailure);
@@ -94,5 +89,34 @@ public sealed class ClientEnvironmentTests
         var conflict = env.UpdateUrl(portalSecondary.Id, DomainTestHelper.UrlType("portal"), DomainTestHelper.Url("https://portal-alt.example.com"), true);
         Assert.True(conflict.IsFailure);
         Assert.Equal("ENV_URL_PRIMARY_CONFLICT", conflict.Error.Code);
+    }
+
+    [Fact]
+    public void UpdateDetails_ChangesFieldsWithoutEvents()
+    {
+        var clientId = ClientId.New();
+        var env = DomainTestHelper.ExpectValue(ClientEnvironment.Create(
+            clientId,
+            DomainTestHelper.EnvironmentName("Prod"),
+            description: DomainTestHelper.Description("Primary"),
+            username: DomainTestHelper.Username("ops"),
+            password: DomainTestHelper.Secret("Secret123!"),
+            notes: DomainTestHelper.Body("Initial")));
+
+        env.DequeueEvents();
+
+        var result = env.UpdateDetails(
+            DomainTestHelper.EnvironmentName("Staging"),
+            DomainTestHelper.Description("Secondary"),
+            DomainTestHelper.Username("deploy"),
+            DomainTestHelper.Secret("Sup3rS3cret"),
+            DomainTestHelper.Body("Updated"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Staging", env.Name.ToString());
+        Assert.Equal("Secondary", env.Description?.ToString());
+        Assert.Equal("deploy", env.Username?.ToString());
+        Assert.Equal("Updated", env.Notes?.ToString());
+        Assert.Empty(env.DequeueEvents());
     }
 }
