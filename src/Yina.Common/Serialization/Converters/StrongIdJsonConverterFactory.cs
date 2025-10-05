@@ -5,8 +5,10 @@ using Yina.Common.Foundation.Ids;
 
 namespace Yina.Common.Serialization.Converters;
 
+/// <summary>Factory for <see cref="JsonConverter"/> instances handling <see cref="StrongId{T}"/>.</summary>
 public sealed class StrongIdJsonConverterFactory : JsonConverterFactory
 {
+    /// <inheritdoc />
     public override bool CanConvert(Type typeToConvert)
     {
         if (!typeToConvert.IsGenericType)
@@ -29,6 +31,7 @@ public sealed class StrongIdJsonConverterFactory : JsonConverterFactory
         return false;
     }
 
+    /// <inheritdoc />
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
         var genericDefinition = typeToConvert.GetGenericTypeDefinition();
@@ -41,16 +44,24 @@ public sealed class StrongIdJsonConverterFactory : JsonConverterFactory
 
         if (genericDefinition == typeof(Nullable<>))
         {
-            var innerType = typeToConvert.GetGenericArguments()[0];
-            var converterType = typeof(NullableStrongIdConverter<>).MakeGenericType(innerType);
+            var strongIdType = typeToConvert.GetGenericArguments()[0];
+            if (!strongIdType.IsGenericType || strongIdType.GetGenericTypeDefinition() != typeof(StrongId<>))
+            {
+                throw new NotSupportedException($"Type '{typeToConvert}' is not supported by {nameof(StrongIdJsonConverterFactory)}.");
+            }
+
+            var tagType = strongIdType.GetGenericArguments()[0];
+            var converterType = typeof(NullableStrongIdConverter<>).MakeGenericType(tagType);
             return (JsonConverter)Activator.CreateInstance(converterType)!;
         }
 
         throw new NotSupportedException($"Type '{typeToConvert}' is not supported by {nameof(StrongIdJsonConverterFactory)}.");
     }
 
+    /// <summary>Converter for non-nullable StrongId values.</summary>
     private sealed class StrongIdConverter<TTag> : JsonConverter<StrongId<TTag>> where TTag : notnull
     {
+        /// <inheritdoc />
         public override StrongId<TTag> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             var value = reader.GetString();
@@ -62,12 +73,15 @@ public sealed class StrongIdJsonConverterFactory : JsonConverterFactory
             throw new JsonException($"Invalid StrongId<{typeof(TTag).Name}> value: '{value}'");
         }
 
+        /// <inheritdoc />
         public override void Write(Utf8JsonWriter writer, StrongId<TTag> value, JsonSerializerOptions options)
             => writer.WriteStringValue(value.Value.ToString());
     }
 
+    /// <summary>Converter for nullable StrongId values.</summary>
     private sealed class NullableStrongIdConverter<TTag> : JsonConverter<StrongId<TTag>?> where TTag : notnull
     {
+        /// <inheritdoc />
         public override StrongId<TTag>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType == JsonTokenType.Null)
@@ -84,6 +98,7 @@ public sealed class StrongIdJsonConverterFactory : JsonConverterFactory
             throw new JsonException($"Invalid StrongId<{typeof(TTag).Name}> value: '{value}'");
         }
 
+        /// <inheritdoc />
         public override void Write(Utf8JsonWriter writer, StrongId<TTag>? value, JsonSerializerOptions options)
         {
             if (value is null)
@@ -92,8 +107,7 @@ public sealed class StrongIdJsonConverterFactory : JsonConverterFactory
                 return;
             }
 
-            var id = value.Value;
-            writer.WriteStringValue(id.Value.ToString());
+            writer.WriteStringValue(value.Value.Value.ToString());
         }
     }
 }

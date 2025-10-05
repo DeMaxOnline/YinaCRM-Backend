@@ -2,6 +2,9 @@ using System;
 
 namespace Yina.Common.Validation;
 
+/// <summary>
+/// Represents a single validation failure for a given field.
+/// </summary>
 public readonly record struct ValidationError(string Field, string Message, string Code = "VALIDATION_ERROR")
 {
     public override string ToString() => string.IsNullOrWhiteSpace(Field)
@@ -13,3 +16,6 @@ public readonly record struct ValidationError(string Field, string Message, stri
             ? this
             : this with { Field = string.IsNullOrWhiteSpace(Field) ? prefix : $"{prefix}.{Field}" };
 }
+
+
+

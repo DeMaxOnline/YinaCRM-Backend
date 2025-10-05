@@ -1,3 +1,7 @@
 namespace Yina.Common.Protocols;
 
-public interface IEvent : IMessage { }
+/// <summary>Represents an event message.</summary>
+public interface IEvent : IMessage
+{
+}
+

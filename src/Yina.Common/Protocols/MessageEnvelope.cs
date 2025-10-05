@@ -3,6 +3,7 @@ using System.Diagnostics;
 
 namespace Yina.Common.Protocols;
 
+/// <summary>Wraps a message with standardized metadata for transport.</summary>
 public sealed class MessageEnvelope<TMessage>
     where TMessage : IMessage
 {
@@ -40,3 +41,5 @@ public sealed class MessageEnvelope<TMessage>
         return new(Message, m);
     }
 }
+
+

@@ -2,6 +2,7 @@ using System;
 
 namespace Yina.Common.Resilience;
 
+/// <summary>Provides delay intervals between retry attempts.</summary>
 public interface IBackoffStrategy
 {
     TimeSpan GetDelay(int attemptNumber);
@@ -14,7 +15,7 @@ public sealed class JitteredExponentialBackoffStrategy : IBackoffStrategy
 {
     private readonly TimeSpan _baseDelay;
     private readonly TimeSpan _maxDelay;
-    private readonly Random _random = new();
+    private readonly Random _random = Random.Shared;
 
     public JitteredExponentialBackoffStrategy(TimeSpan baseDelay, TimeSpan maxDelay)
     {
@@ -44,3 +45,6 @@ public sealed class JitteredExponentialBackoffStrategy : IBackoffStrategy
         return TimeSpan.FromMilliseconds(jitter);
     }
 }
+
+
+

@@ -8,7 +8,7 @@ public static partial class Errors
     private const string DefaultUnexpectedMessage = "An unexpected error occurred.";
 
     public static Error Failure(string code, string message, int statusCode = 500, IDictionary<string, string>? metadata = null)
-        => Error.Create(code, message, statusCode, null, metadata);
+        => Error.Create(NormalizeCode(code), message, statusCode, null, metadata);
 
     public static Error FromException(Exception exception, string? code = null, int statusCode = 500, IDictionary<string, string>? metadata = null)
     {
@@ -34,3 +34,4 @@ public static partial class Errors
         return Error.Create(errorCode, DefaultUnexpectedMessage, statusCode, null, details);
     }
 }
+

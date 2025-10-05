@@ -5,6 +5,7 @@ using Yina.Common.Abstractions.Errors;
 
 namespace Yina.Common.Abstractions.Results.Extensions;
 
+/// <summary>Helpers to transform or recover from failed results.</summary>
 public static partial class ResultExtensions
 {
     public static Result<T> MapError<T>(this Result<T> result, Func<Error, Error> mapper)
@@ -43,3 +44,5 @@ public static partial class ResultExtensions
         return await result.RecoverWithAsync(fallback).ConfigureAwait(false);
     }
 }
+
+

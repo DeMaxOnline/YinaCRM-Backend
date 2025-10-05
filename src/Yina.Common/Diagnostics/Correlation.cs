@@ -4,6 +4,7 @@ using System.Threading;
 
 namespace Yina.Common.Diagnostics;
 
+/// <summary>Manages correlation/causation identifiers across async flows.</summary>
 public static class Correlation
 {
     private static readonly AsyncLocal<string?> CurrentCorrelationId = new();
@@ -39,3 +40,6 @@ public static class Correlation
     public static void SetCausationId(string? value)
         => CurrentCausationId.Value = string.IsNullOrWhiteSpace(value) ? null : value;
 }
+
+
+

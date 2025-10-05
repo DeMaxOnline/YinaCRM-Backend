@@ -3,36 +3,57 @@ using System.Net;
 
 namespace Yina.Common.Abstractions.Errors;
 
+/// <summary>High-level classification for errors.</summary>
 public enum ErrorCategory
 {
+    /// <summary>No category.</summary>
     None = 0,
+    /// <summary>Validation failure.</summary>
     Validation,
+    /// <summary>Resource missing.</summary>
     NotFound,
+    /// <summary>Conflict with existing state.</summary>
     Conflict,
+    /// <summary>Concurrency violation.</summary>
     Concurrency,
+    /// <summary>Authentication required.</summary>
     Unauthorized,
+    /// <summary>Access denied.</summary>
     Forbidden,
+    /// <summary>Precondition not satisfied.</summary>
     PreconditionFailed,
+    /// <summary>Client is being rate limited.</summary>
     RateLimited,
+    /// <summary>Timeout occurred.</summary>
     Timeout,
+    /// <summary>External dependency failure.</summary>
     ExternalDependency,
+    /// <summary>Business rule failure.</summary>
     BusinessRule,
+    /// <summary>Infrastructure failure.</summary>
     Infrastructure,
+    /// <summary>Transient failure.</summary>
     Transient,
+    /// <summary>Unknown category.</summary>
     Unknown
 }
 
+/// <summary>Extensions to inspect error categories and characteristics.</summary>
 public static class ErrorExtensions
 {
+    /// <summary>Determines whether the error represents a 4xx client error.</summary>
     public static bool IsClientError(this Error error)
         => error.StatusCode is >= 400 and < 500;
 
+    /// <summary>Determines whether the error represents a 5xx server error.</summary>
     public static bool IsServerError(this Error error)
         => error.StatusCode >= 500;
 
+    /// <summary>Determines whether the error relates to security (401/403).</summary>
     public static bool IsSecurityError(this Error error)
         => error.GetCategory() is ErrorCategory.Unauthorized or ErrorCategory.Forbidden;
 
+    /// <summary>Determines whether the error is safe to retry later.</summary>
     public static bool IsTransient(this Error error)
     {
         if (error.GetCategory() is ErrorCategory.Transient or ErrorCategory.RateLimited or ErrorCategory.Timeout)
@@ -48,6 +69,7 @@ public static class ErrorExtensions
             or (int)HttpStatusCode.GatewayTimeout;
     }
 
+    /// <summary>Determines whether the error should trigger a retry.</summary>
     public static bool IsRetryable(this Error error)
     {
         if (error.IsTransient())
@@ -58,6 +80,7 @@ public static class ErrorExtensions
         return error.StatusCode is >= 500 and < 600 and not (int)HttpStatusCode.NotImplemented;
     }
 
+    /// <summary>Maps the error to an <see cref="ErrorCategory"/>.</summary>
     public static ErrorCategory GetCategory(this Error error)
     {
         if (error.IsNone)
@@ -105,3 +128,5 @@ public static class ErrorExtensions
     private static bool StartsWith(string code, string prefix)
         => code.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
 }
+
+

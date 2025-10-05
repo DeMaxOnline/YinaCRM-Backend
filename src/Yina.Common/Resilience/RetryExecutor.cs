@@ -6,8 +6,12 @@ using Yina.Common.Abstractions.Results;
 
 namespace Yina.Common.Resilience;
 
+/// <summary>Executes operations with retry/backoff and optional per-attempt timeout.</summary>
 public static class RetryExecutor
 {
+    /// <summary>
+    /// Executes the provided <paramref name="action"/> with retry semantics.
+    /// </summary>
     public static async Task ExecuteAsync(
         Func<CancellationToken, Task> action,
         RetryOptions options,
@@ -51,6 +55,9 @@ public static class RetryExecutor
         throw lastEx ?? new OperationCanceledException();
     }
 
+    /// <summary>
+    /// Executes the provided <paramref name="action"/> returning a value with retry semantics.
+    /// </summary>
     public static async Task<T> ExecuteAsync<T>(
         Func<CancellationToken, Task<T>> action,
         RetryOptions options,
@@ -71,6 +78,9 @@ public static class RetryExecutor
         return result;
     }
 
+    /// <summary>
+    /// Executes the provided <paramref name="action"/> returning <see cref="Result{T}"/> with retry semantics.
+    /// </summary>
     public static async Task<Result<T>> ExecuteAsync<T>(
         Func<CancellationToken, Task<Result<T>>> action,
         RetryOptions options,
@@ -135,3 +145,6 @@ public static class RetryExecutor
         return Result<T>.Failure(Error.Create("RETRY_EXHAUSTED", "Retry attempts exhausted", 503));
     }
 }
+
+
+

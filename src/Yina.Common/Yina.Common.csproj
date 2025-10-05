@@ -1,9 +1,26 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyName>Yina.Common</AssemblyName>
+    <RootNamespace>Yina.Common</RootNamespace>
+    <PackageId>Yina.Common</PackageId>
+    <Description>Shared primitives (Result, Error, StrongId, Retry, Caching) for Yina services.</Description>
+    <PackageTags>yina;common;result;error;retry;caching</PackageTags>
+    <Authors>Yina</Authors>
+    <Company>Yina</Company>
+    <PackageProjectUrl>https://github.com/yina/yinacommmon</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/yina/yinacommmon</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
-
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 </Project>

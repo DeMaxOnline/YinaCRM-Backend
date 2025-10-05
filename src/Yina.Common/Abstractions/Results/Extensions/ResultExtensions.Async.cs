@@ -5,6 +5,7 @@ using Yina.Common.Abstractions.Errors;
 
 namespace Yina.Common.Abstractions.Results.Extensions;
 
+/// <summary>Provides async helpers for <see cref="Result"/> flow composition.</summary>
 public static partial class ResultExtensions
 {
     public static async Task<Result<T>> EnsureAsync<T>(this Result<T> result, Func<T, Task<bool>> predicate, Error error)
@@ -55,3 +56,5 @@ public static partial class ResultExtensions
         }
     }
 }
+
+

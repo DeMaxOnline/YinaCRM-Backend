@@ -4,6 +4,7 @@ using Yina.Common.Foundation.Clock;
 
 namespace Yina.Common.Protocols;
 
+/// <summary>Correlation-friendly metadata attached to envelopes.</summary>
 public readonly record struct MessageMetadata(
     string CorrelationId,
     string? CausationId,
@@ -21,3 +22,5 @@ public readonly record struct MessageMetadata(
         return new(correlationId, causationId, userId, ts);
     }
 }
+
+

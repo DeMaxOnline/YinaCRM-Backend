@@ -1,3 +1,7 @@
 namespace Yina.Common.Protocols;
 
-public interface ICommand : IMessage { }
+/// <summary>Represents a command message.</summary>
+public interface ICommand : IMessage
+{
+}
+

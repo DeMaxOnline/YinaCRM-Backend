@@ -3,12 +3,18 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Yina.Common.Foundation.Ids;
 
+/// <summary>
+/// Strongly typed identifier wrapper to avoid leaking raw <see cref="Guid"/> values across layers.
+/// </summary>
 public readonly record struct StrongId<TTag>(Guid Value) where TTag : notnull
 {
+    /// <summary>Gets an empty identifier (all zeros).</summary>
     public static StrongId<TTag> Empty => new(Guid.Empty);
 
+    /// <summary>Gets a value indicating whether the identifier is empty.</summary>
     public bool IsEmpty => Value == Guid.Empty;
 
+    /// <summary>Creates a new identifier with a random underlying <see cref="Guid"/>.</summary>
     public static StrongId<TTag> New() => new(Guid.NewGuid());
 
     public static StrongId<TTag> FromGuid(Guid value) => new(value);

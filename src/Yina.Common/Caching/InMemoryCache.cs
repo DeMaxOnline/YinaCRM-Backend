@@ -1,38 +1,38 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Yina.Common.Caching;
 
+/// <summary>
+/// Thread-safe in-memory cache with optional size-based eviction and bounded cleanup loops.
+/// </summary>
 public sealed class InMemoryCache : ICache, IDisposable
 {
     private sealed class Entry
     {
         public object? Value { get; set; }
-
         public DateTimeOffset? AbsoluteExpiry { get; set; }
-
         public TimeSpan? SlidingExpiration { get; set; }
-
         public long? Size { get; set; }
-
         public DateTimeOffset LastAccessUtc { get; set; }
+        public long Version { get; set; }
     }
 
+    private const int MaxEvictionSweep = 32;
+
     private readonly ConcurrentDictionary<string, Entry> _store = new(StringComparer.Ordinal);
-
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new(StringComparer.Ordinal);
-
+    private readonly PriorityQueue<(string Key, long Version), DateTimeOffset> _lruQueue = new();
+    private readonly object _lruLock = new();
+    private long _versionCounter;
     private readonly Timer _cleanupTimer;
-
     private readonly TimeSpan _cleanupInterval = TimeSpan.FromMinutes(5);
-
     private readonly long _maxSize;
-
     private long _currentSize;
-
     private bool _disposed;
 
     public InMemoryCache(long maxSize = 100_000_000)
@@ -83,7 +83,10 @@ public sealed class InMemoryCache : ICache, IDisposable
             Interlocked.Add(ref _currentSize, -oldEntry.Size.Value);
         }
 
+        entry.Version = Interlocked.Increment(ref _versionCounter);
+
         _store[key] = entry;
+        EnqueueLru(key, entry.LastAccessUtc, entry.Version);
         return ValueTask.CompletedTask;
     }
 
@@ -97,7 +100,7 @@ public sealed class InMemoryCache : ICache, IDisposable
                 return new ValueTask<(bool found, T? value)>((false, default));
             }
 
-            Touch(entry);
+            Touch(key, entry);
             if (entry.Value is T t)
             {
                 return new ValueTask<(bool found, T? value)>((true, t));
@@ -153,11 +156,65 @@ public sealed class InMemoryCache : ICache, IDisposable
         return false;
     }
 
-    private static void Touch(Entry entry)
+    private void Touch(string key, Entry entry)
     {
-        if (entry.SlidingExpiration is not null)
+        if (entry.SlidingExpiration is null)
         {
-            entry.LastAccessUtc = DateTimeOffset.UtcNow;
+            return;
+        }
+
+        entry.LastAccessUtc = DateTimeOffset.UtcNow;
+        entry.Version = Interlocked.Increment(ref _versionCounter);
+        EnqueueLru(key, entry.LastAccessUtc, entry.Version);
+    }
+
+    private void EnqueueLru(string key, DateTimeOffset timestamp, long version)
+    {
+        lock (_lruLock)
+        {
+            _lruQueue.Enqueue((key, version), timestamp);
+        }
+    }
+
+    private bool TryDequeueLru(out (string Key, long Version) item)
+    {
+        lock (_lruLock)
+        {
+            if (_lruQueue.Count == 0)
+            {
+                item = default;
+                return false;
+            }
+
+            item = _lruQueue.Dequeue();
+            return true;
+        }
+    }
+
+    private void TrimStaleLruEntries(int maxSweeps)
+    {
+        var sweeps = 0;
+        while (sweeps++ < maxSweeps && TryDequeueLru(out var candidate))
+        {
+            if (!_store.TryGetValue(candidate.Key, out var entry))
+            {
+                continue;
+            }
+
+            if (!entry.Size.HasValue || entry.Version != candidate.Version)
+            {
+                continue;
+            }
+
+            if (!IsExpired(entry))
+            {
+                break;
+            }
+
+            if (_store.TryRemove(candidate.Key, out entry) && entry.Size.HasValue)
+            {
+                Interlocked.Add(ref _currentSize, -entry.Size.Value);
+            }
         }
     }
 
@@ -189,30 +246,36 @@ public sealed class InMemoryCache : ICache, IDisposable
                 }
             }
         }
+
+        TrimStaleLruEntries(MaxEvictionSweep);
     }
 
     private void EnsureCapacity(long requiredSize)
     {
+        var sweeps = 0;
         while (Interlocked.Read(ref _currentSize) + requiredSize > _maxSize)
         {
-            string? removeKey = null;
-            DateTimeOffset oldest = DateTimeOffset.MaxValue;
-
-            foreach (var kvp in _store)
-            {
-                if (kvp.Value.Size.HasValue && kvp.Value.LastAccessUtc < oldest)
-                {
-                    oldest = kvp.Value.LastAccessUtc;
-                    removeKey = kvp.Key;
-                }
-            }
-
-            if (removeKey is null)
+            if (sweeps++ >= MaxEvictionSweep)
             {
                 break;
             }
 
-            if (_store.TryRemove(removeKey, out var entry) && entry.Size.HasValue)
+            if (!TryDequeueLru(out var candidate))
+            {
+                break;
+            }
+
+            if (!_store.TryGetValue(candidate.Key, out var entry))
+            {
+                continue;
+            }
+
+            if (!entry.Size.HasValue || entry.Version != candidate.Version)
+            {
+                continue;
+            }
+
+            if (_store.TryRemove(candidate.Key, out entry) && entry.Size.HasValue)
             {
                 Interlocked.Add(ref _currentSize, -entry.Size.Value);
             }

@@ -5,6 +5,7 @@ using Yina.Common.Abstractions.Errors;
 
 namespace Yina.Common.Abstractions.Results.Extensions;
 
+/// <summary>Side-effect hooks that leave the source result unchanged.</summary>
 public static partial class ResultExtensions
 {
     public static Result<T> OnSuccess<T>(this Result<T> result, Action<T> action)
@@ -111,3 +112,5 @@ public static partial class ResultExtensions
         return result;
     }
 }
+
+

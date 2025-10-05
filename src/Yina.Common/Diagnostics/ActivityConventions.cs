@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace Yina.Common.Diagnostics;
 
+/// <summary>Constants and helpers for OpenTelemetry activity naming and tags.</summary>
 public static class ActivityConventions
 {
     public const string SourceName = "yinacrm.common";
@@ -60,3 +61,5 @@ public static class ActivityConventions
         return activity;
     }
 }
+
+

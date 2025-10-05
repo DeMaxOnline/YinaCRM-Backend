@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Yina.Common.Caching;
 
+/// <summary>
+/// Helper to build consistent hierarchical cache keys (e.g. <c>clients:123:profile</c>).
+/// </summary>
 public sealed class CacheKey
 {
     private readonly List<string> _parts = new(8);
